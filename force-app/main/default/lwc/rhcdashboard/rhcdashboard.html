@@ -1,0 +1,94 @@
+<template>
+    <div class="slds" style="min-height: 500px; max-width:1300px; width:1300px;">
+        <div class="slds-grid paddingTop">
+            <div style="max-width:90%">
+                <div class=" slds-text-align--left">
+                    <div class="slds-grid">
+                        
+                        <div class="slds-col"> 
+                            <div class="slds-form-element reportDiv paddingleft" style="width: 200px">
+                                <div class="slds-form-element__label">Dashboard:</div>
+                                <div>
+                                    <select class="slds-select, rad" onchange={onReportChange} name="InputSelectReport">
+                                        <template for:each={selReports} for:item="roleVal"> 
+                                            <option value={roleVal} key={roleVal}>{roleVal}</option> 
+                                        </template>
+                                    </select>
+                                    <br/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col">
+                            <div class="slds-form-element roleDiv" style="min-width: 110px">
+                                <div class="slds-form-element__label">Level: </div>
+                                <div>
+                                    <select class="slds-select, rad" name="InputSelectRole" onchange={onRoleChange}>
+                                        <template for:each={selRoles} for:item="roleName"> 
+                                            <option value={roleName} key={roleName}>{roleName}</option> 
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col">
+                            <div class="slds-form-element hierarchyDiv paddingleft" style="min-width: 170px">
+                                <div class="slds-form-element__label">Role Hierarchy: </div>
+                                <br/>
+                                <select class="slds-select, rad" name="InputSelectRoleHierarchy" onchange={onRoleHierarchyChange} disabled={hierarchyDisabled}>
+                                    <template for:each={selRoleList} for:item="roleVal"> 
+                                        <option value={roleVal} key={roleVal}>{roleVal}</option> 
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col">
+                            <div class="slds-form-element hierarchyDiv paddingleft" style="min-width: 170px">
+                                <div class="slds-form-element__label">Individual: </div><br/>
+                                <select class="slds-select, rad" id="InputSelectIndividual" disabled={individualDisabled} onchange={checkEntries}>
+                                    <template for:each={selIndLst} for:item="indVal"> 
+                                        <option value={indVal} key={indVal}>{indVal}</option> 
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class ="slds-col">
+                            <div class="slds-form-element reportDiv paddingleft" style="width: 190px">
+                                <div class="slds-form-element__label"> Date Range From:</div>
+                                <div>
+                                    <lightning-input type="date" name="InputDteFrom" class="field, rad" onchange={checkEntries} value={selDteFrom} display-date-picker="true" ></lightning-input> 
+                                </div>	
+                            </div>
+                        </div>
+                        
+                        <div class ="slds-col">
+                            <div class="slds-form-element reportDiv paddingleft" style="width: 190px">
+                                <div class="slds-form-element__label"> Date Range To:</div>
+                                <div>
+                                    <lightning-input type="date" name="InputDteTo" class="field, rad" value={selDteTo} onchange={checkEntries} display-date-picker="true" ></lightning-input> 
+                                </div>	
+                            </div>
+                        </div>  
+                        
+                        <div class="slds-col paddingleft paddingTop">
+                            <div class="slds-form-element">
+                                &nbsp;&nbsp;&nbsp;<lightning-button id="searchButton" label="Go" onclick={showChart}></lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <div id="errors">
+            <lightning-formatted-text value={errorString} ></lightning-formatted-text>
+        </div>
+        <div id="Charts">
+            <c-visualcharts></c-visualcharts> 
+        </div>
+        
+    </div>
+</template>

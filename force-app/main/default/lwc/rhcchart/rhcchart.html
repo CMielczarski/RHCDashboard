@@ -1,0 +1,38 @@
+<template>
+    <br/>
+    <div class = "chartDiv" >  
+        <template if:true={spinner}>
+        <div id="xi-spinner" class="slds-spinner_container xc-hidden">
+            <div class="slds-spinner--brand slds-spinner slds-spinner--large" aria-hidden="false" role="alert">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+        </template>
+        
+        <div>
+            <div class="slds-clearfix containerDiv">
+                <!-- Chart Container -->
+                <div class="slds-float--left width50" id={chartContainerId}>
+                    <canvas id={chartId} class="width100 height200"></canvas>
+                </div>
+                <!-- Chart Container -->
+                <!-- Legend -->
+                <div class="slds-float--right" style="min-width:230px">
+                    <ul >
+                        <template for:each={chartLegend} for:item="item">
+                            <li key={item.Id}>
+                                &nbsp;
+                                {item.label}
+                                &nbsp;({item.amount})
+                                <br/>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+                <!-- Legend -->
+                 
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,41 @@
+.inputSelect {
+    
+    padding-top:10px;
+  }
+.dashboardDiv{
+      
+      width:550px;
+  }
+.roleDiv{
+      padding-left:24px;
+      width:120px;
+  }
+  
+.hierarchyDiv{
+      
+      width:180px; 
+  }
+  
+.reportDiv {
+      
+      width:280px; 
+  }
+.paddingleft{
+      
+     padding-left : 4px;
+  }
+  
+.paddingTop{
+      
+     padding-top:22px; 
+  }
+    
+.displayNone {
+              
+      display: none;
+  }
+          
+.displayBlock {
+              
+      display: block;
+  }
