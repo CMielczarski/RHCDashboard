@@ -11,11 +11,6 @@ export default class Rhcchart extends LightningElement {
     @api chartdata
     @api chartList = [];
 
-    //globalId + '_chartContainer'
-    @api chartContainerId;
-    //globalId + '_chart'
-    @api chartId;
-
     chartJsInitialised = false;
 
     renderedCallback(){
@@ -100,9 +95,9 @@ export default class Rhcchart extends LightningElement {
     
             // Draw chart.
             var chartType = 'Pie'; 
-            var globalId = getGlobalId();
-    
-            var	canvas = document.getElementById(globalId + "_chart");
+            
+            var	canvas = document.querySelector("#chart");
+            console.log('Canvas: ' + canvas);
             var ctx = canvas.getContext("2d");
           
             if (haschartdata) {

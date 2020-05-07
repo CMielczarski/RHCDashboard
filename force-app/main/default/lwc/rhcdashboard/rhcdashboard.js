@@ -95,8 +95,6 @@ export default class Rhcdashboard extends LightningElement {
                 var selIndividual = this.selectedIndividual;
                 var selDteFrom = this.selectedFromDate;
                 var selDteTo = this.selectedToDate;
-                // Fire the custom event
-                //this.dispatchEvent(goEvent);
                 this.template.querySelector('c-visualcharts').eventHandler(selRole, selReport, selRoleName, selIndividual, selDteFrom, selDteTo);
                 console.log('Event Fired');
             }
