@@ -157,8 +157,8 @@ export default class Visualcharts extends LightningElement {
                             this.chartTitle = repList[i].label;
                             this.chartData = lstRep;
                             arr.push(repList[i]);
-                            this.showButton = true;
                             }
+                        this.showButton = true;
                         this.chartlstData = arr;
                         }
                     )

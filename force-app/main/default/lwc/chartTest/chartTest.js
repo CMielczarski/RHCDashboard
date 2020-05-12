@@ -6,8 +6,7 @@ const generateRandomNumber = () => {
 };
 import ChartJS from '@salesforce/resourceUrl/ChartJSNew';
 
-
-export default class Rhcchart extends LightningElement {
+export default class ChartTest extends LightningElement {
 
     @api charttitle = "Accounts Without Activity";
     @api chartLegend;
