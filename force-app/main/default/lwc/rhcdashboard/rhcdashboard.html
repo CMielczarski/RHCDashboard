@@ -47,7 +47,7 @@
                         <div class="slds-col">
                             <div class="slds-form-element hierarchyDiv paddingleft" style="min-width: 170px">
                                 <div class="slds-form-element__label">Individual: </div><br/>
-                                <select class="slds-select, rad" id="InputSelectIndividual" disabled={individualDisabled} onchange={checkEntries}>
+                                <select class="slds-select, rad" name="InputSelectIndividual" disabled={individualDisabled} onchange={checkEntries}>
                                     <template for:each={selIndLst} for:item="indVal"> 
                                         <option value={indVal} key={indVal}>{indVal}</option> 
                                     </template>

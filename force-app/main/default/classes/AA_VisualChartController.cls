@@ -51,6 +51,49 @@ public with sharing class AA_VisualChartController {
           }
       }
     
+      public class reportWrapper{
+        @AuraEnabled
+        public string itemID  {get;set;}
+        @AuraEnabled
+        public string itemName  {get;set;}
+        @AuraEnabled
+        public string ownerName  {get;set;}
+        @AuraEnabled
+        public string lastActivity  {get;set;}
+        @AuraEnabled
+        public string riskReason  {get;set;}
+        @AuraEnabled
+        public datetime riskDate  {get;set;}
+        @AuraEnabled
+        public string activityDate  {get;set;}
+        @AuraEnabled
+        public string activityType  {get;set;}
+        @AuraEnabled
+        public string description  {get;set;}
+        @AuraEnabled
+        public string tier  {get;set;}
+        @AuraEnabled
+        public boolean render {get;set;}
+        
+        public reportWrapper(string itemID, string itemName, string ownerName, string lastActivity, string riskReason, dateTime riskDate, string activityDate, string activityType, string description, string tier){
+            this.itemID = itemID;
+            this.itemName = itemName;
+            this.ownerName = ownerName;
+            this.lastActivity = lastActivity;
+            this.riskReason = riskReason;
+            this.riskDate = riskDate;
+            this.activityType = activityType;
+            this.description = description;
+            this.tier = tier;
+            if(itemID != null){
+                this.render = true;
+                }
+            else{
+                this.render = false;
+                }
+            }
+        }
+    
     /**
     @MethodName : getReportVals
     @Param      : string selRole, string selRoleName, string selReport
@@ -163,7 +206,7 @@ public with sharing class AA_VisualChartController {
           	set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Account.Name, Owner.Name, Owner.UserRoleId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\')  AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -267,7 +310,7 @@ public with sharing class AA_VisualChartController {
           	set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Description, Account.Name, Owner.Name, Account.PF_Risk_Date_Stamp__c, Account.PF_Reason_for_Risk__c, Owner.UserRoleId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\') AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -293,10 +336,14 @@ public with sharing class AA_VisualChartController {
             events.clear();
             events.addAll(eventClean);
             system.debug('Events: ' + events);
-            JSONString = JSON.serialize(events);    
+            list<reportWrapper> processList = new list<reportWrapper>();
+            for(Event e : events){
+              processList.add(new reportWrapper(e.AccountID, e.Account.Name, e.Owner.Name, null, e.Account.PF_Reason_for_Risk__c, e.Account.PF_Risk_Date_Stamp__c, string.valueOf(e.ActivityDate), e.Type, e.Description, null));
+              }
+            JSONString = JSON.serialize(processList);
             }
     	return JSONString;
-    	}	
+    	}
     	
     /*Provides the chart for activities based on either the National, COO, DVP, OR RVP Level and other filters the user selects.
     */
@@ -355,7 +402,7 @@ public with sharing class AA_VisualChartController {
           	set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Account.Name, Owner.Name, Owner.UserRoleId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\' OR Type = \'Phone Call\')  AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -393,7 +440,7 @@ public with sharing class AA_VisualChartController {
             set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT Owner.Name, Owner.UserRoleId, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\' OR Type = \'Phone Call\') AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -511,7 +558,7 @@ public with sharing class AA_VisualChartController {
           	set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Account.Name, Owner.Name, Owner.UserRoleId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\' OR Type = \'Phone Call\')  AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -556,13 +603,17 @@ public with sharing class AA_VisualChartController {
             set<Account> accountClean = new set<Account>(AccountTeam);
             AccountTeam.clear();
             AccountTeam.addAll(accountClean);
-            JSONString = JSON.serialize(AccountTeam);    
+            list<reportWrapper> processList = new list<reportWrapper>();
+            for(Account a: AccountTeam){
+              processList.add(new reportWrapper(a.ID, a.Name, a.Owner.Name, string.valueOf(a.PF_Last_Activity_Date__c), a.PF_Reason_for_Risk__c, a.PF_Risk_Date_Stamp__c, null, null, null, a.PF_Tier__c));
+              }
+            JSONString = JSON.serialize(processList);
             }
     	else if(selRole == 'National'){
             set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT Owner.Name, Owner.UserRoleId, ActivityDate, Account.ID FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F\' OR Type = \'Phone Call\')  AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -600,7 +651,11 @@ public with sharing class AA_VisualChartController {
             set<Account> accountClean = new set<Account>(accounts);
             accounts.clear();
             accounts.addAll(accountClean);
-            JSONString = JSON.serialize(accounts);
+            list<reportWrapper> processList = new list<reportWrapper>();
+                for(Account a: accounts){
+                  processList.add(new reportWrapper(a.ID, a.Name, a.Owner.Name, string.valueOf(a.PF_Last_Activity_Date__c), a.PF_Reason_for_Risk__c, a.PF_Risk_Date_Stamp__c, null, null, null, a.PF_Tier__c));
+                  }
+            JSONString = JSON.serialize(processList);
             system.debug('National Facility size: ' + accounts.size());
             }
         return JSONString;
@@ -643,7 +698,7 @@ public with sharing class AA_VisualChartController {
             set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F - PD Monthly Meeting\' OR Type = \'F2F\' OR Type = \'CPS Live Client Engagement - CPS Use Only\' OR Type = \'CPS Live Rehab Engagement - CPS Use Only\' OR Type = \'CPS Remote Client Engagement - CPS Use Only\' OR Type = \'CPS Remote Rehab Engagement - CPS Use Only\' OR Type = \'Phone Call\' OR Type = \'Email\')';
       if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -696,7 +751,11 @@ public with sharing class AA_VisualChartController {
                 
                 accountTeam.clear();
                 accountTeam.addAll(accountTeamClean);
-                JSONString = JSON.serialize(accountTeam);
+                list<reportWrapper> processList = new list<reportWrapper>();
+                for(AccountTeamMember atm: accountTeam){
+                  processList.add(new reportWrapper(atm.AccountID, atm.Account.Name, atm.Account.Owner.Name, string.valueOf(atm.Account.PF_Last_Activity_Date__c), atm.Account.PF_Reason_for_Risk__c, atm.Account.PF_Risk_Date_Stamp__c, null, null, null, atm.Account.PF_Tier__c));
+                  }
+                JSONString = JSON.serialize(processList);
           }
         
         //If selected Role from first picklist is not national, it queries the account based on PF_Product_Type__c and recordtypeid and adds it to the map, mapAccountidtoAccount
@@ -704,7 +763,7 @@ public with sharing class AA_VisualChartController {
             set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Type, StartDateTime FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F - PD Monthly Meeting\' OR Type = \'F2F\' OR Type = \'CPS Live Client Engagement - CPS Use Only\' OR Type = \'CPS Live Rehab Engagement - CPS Use Only\' OR Type = \'CPS Remote Client Engagement - CPS Use Only\' OR Type = \'CPS Remote Rehab Engagement - CPS Use Only\' OR Type = \'Phone Call\' OR Type = \'Email\')';
       	if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -733,7 +792,11 @@ public with sharing class AA_VisualChartController {
             accounts.clear();
             accounts.addAll(accountClean);
             system.debug('National Account size: ' + accounts.size());
-            JSONString = JSON.serialize(accounts);
+            list<reportWrapper> processList = new list<reportWrapper>();
+                for(Account a: accounts){
+                  processList.add(new reportWrapper(a.ID, a.Name, a.Owner.Name, string.valueOf(a.PF_Last_Activity_Date__c), a.PF_Reason_for_Risk__c, a.PF_Risk_Date_Stamp__c, null, null, null, a.PF_Tier__c));
+                  }
+            JSONString = JSON.serialize(processList);
           	}
           system.debug('accounts size: ' + accounts.size());
           system.debug('accountTeam/Individual size: ' + accountTeam.size());
@@ -883,7 +946,11 @@ public with sharing class AA_VisualChartController {
             set<Account> accClean = new set<Account>(accounts);
             accounts.clear();
             accounts.addAll(accClean);
-            String JSONString = JSON.serialize(accounts);
+            list<reportWrapper> processList = new list<reportWrapper>();
+                for(Account a: accounts){
+                  processList.add(new reportWrapper(a.ID, a.Name, a.Owner.Name, string.valueOf(a.PF_Last_Activity_Date__c), a.PF_Reason_for_Risk__c, a.PF_Risk_Date_Stamp__c, null, null, null, a.PF_Tier__c));
+                  }
+            String JSONString = JSON.serialize(processList);
           return JSONString;
         }
         
@@ -920,7 +987,7 @@ public with sharing class AA_VisualChartController {
                   Datetime dteToFrmt = dateTime.NewInstance(date.valueOf(SelDteTo), Time.newInstance(0,0,0,0));
                   dtToStr = dteToFrmt.format('yyyy-MM-dd\'T\'hh:mm:ss\'Z\'');
                   }
-              string AccountTeamMemberQuery = 'Select UserId, Account.Name, Account.Last_Activity_Type__c, Account.ShippingState, Account.ShippingCity, Account.Owner.Name, Account.PF_Last_Activity_Date__c, User.UserRoleId, Account.PF_Reason_for_Risk__c, Account.PF_Tier__c, Account.ID, Account.PF_Risk_Date_Stamp__c '+
+              string AccountTeamMemberQuery = 'Select UserId, Account.Name, Account.Last_Activity_Type__c, Account.Owner.Name, Account.PF_Last_Activity_Date__c, User.UserRoleId, Account.PF_Reason_for_Risk__c, Account.PF_Tier__c, Account.ID, Account.PF_Risk_Date_Stamp__c '+
                                             'From AccountTeamMember Where Account.Status__c = \'Active\' AND (Account.PF_Product_Type__c = \'SNFSAU\' OR Account.PF_Product_Type__c = \'SNF Skilled\' OR Account.PF_Product_Type__c = \'SNFTCC\' OR Account.PF_Product_Type__c = \'SNFTCU\')'+
                                             ' AND Account.recordtypeid IN: lstRTAccount '+
                                             ' AND  Account.PF_Risk__c = true AND Account.PF_Risk_Date_Stamp__c != null AND Account.Status__c = \'Active\'';
@@ -942,6 +1009,7 @@ public with sharing class AA_VisualChartController {
                 if(sortStr != null){
                     AccountTeamMemberQuery = AccountTeamMemberQuery + sortStr;
                   }
+              system.debug('Risk Members Query: ' + AccountTeamMemberQuery);
               riskMembers = database.query(AccountTeamMemberQuery);
                 map<ID, AccountTeamMember> riskMap = new map<ID, AccountTeamMember>();
                 map<ID, AccountTeamMember> riskMap2 = new map<ID, AccountTeamMember>();
@@ -962,7 +1030,11 @@ public with sharing class AA_VisualChartController {
                 
                 riskMembers.clear();
                 riskMembers.addAll(accountTeamClean);
-                JSONString = JSON.serialize(riskMembers);
+                list<reportWrapper> processList = new list<reportWrapper>();
+                for(AccountTeamMember atm: riskMembers){
+                  processList.add(new reportWrapper(atm.AccountID, atm.Account.Name, atm.Account.Owner.Name, string.valueOf(atm.Account.PF_Last_Activity_Date__c), atm.Account.PF_Reason_for_Risk__c, atm.Account.PF_Risk_Date_Stamp__c, null, null, null, atm.Account.PF_Tier__c));
+                  }
+                JSONString = JSON.serialize(processList);
             System.debug('Serialized list of at-risk Accounts into JSON format: ' + JSONString);
          	}
           else if(selRole == 'National'){
@@ -1001,7 +1073,11 @@ public with sharing class AA_VisualChartController {
                     riskStr = riskStr + sortStr;
                   }
             riskAccounts = database.query(riskStr);
-            JSONString = JSON.serialize(riskAccounts);
+            list<reportWrapper> processList = new list<reportWrapper>();
+                for(Account a: riskAccounts){
+                  processList.add(new reportWrapper(a.ID, a.Name, a.Owner.Name, string.valueOf(a.PF_Last_Activity_Date__c), a.PF_Reason_for_Risk__c, a.PF_Risk_Date_Stamp__c, null, null, null, a.PF_Tier__c));
+                  }
+            JSONString = JSON.serialize(processList);
             System.debug('Serialized list of at-risk Accounts into JSON format: ' + JSONString);
              }
             return JSONString;
@@ -1089,7 +1165,7 @@ public with sharing class AA_VisualChartController {
             set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Type, ActivityDate FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F - PD Monthly Meeting\' OR Type = \'F2F\' OR Type = \'CPS Live Client Engagement - CPS Use Only\' OR Type = \'CPS Live Rehab Engagement - CPS Use Only\' OR Type = \'CPS Remote Client Engagement - CPS Use Only\' OR Type = \'CPS Remote Rehab Engagement - CPS Use Only\' OR Type = \'Phone Call\' OR Type = \'Email\')';
       if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -1132,7 +1208,7 @@ public with sharing class AA_VisualChartController {
           set<ID> ids = new set<ID>();
             string eventQuery = 'SELECT AccountId, Type, StartDateTime FROM Event WHERE RecordTypeId =: rhcEvent AND (Type = \'F2F - QBR\' OR Type = \'F2F - PD Monthly Meeting\' OR Type = \'F2F\' OR Type = \'CPS Live Client Engagement - CPS Use Only\' OR Type = \'CPS Live Rehab Engagement - CPS Use Only\' OR Type = \'CPS Remote Client Engagement - CPS Use Only\' OR Type = \'CPS Remote Rehab Engagement - CPS Use Only\' OR Type = \'Phone Call\' OR Type = \'Email\')';
       		if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' OR StartDateTime <='+dtToStr +')';
+              eventQuery = eventQuery + ' AND (StartDateTime >='+dtFromStr+' AND StartDateTime <='+dtToStr +')';
               }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               eventQuery = eventQuery + ' AND (StartDateTime >=' + dtFromStr + ')';
@@ -1520,7 +1596,7 @@ public with sharing class AA_VisualChartController {
         map <string, Decimal> mapRisktoCount = new map<string, Decimal>();
         map<Id, Account> mapAccountidtoAccount = new map<Id, Account>();
         set<id> setAccountId = new set<Id>();
-        system.debug('SelDteFrom: ' + ' SelDteTo: ' + SelDteTo);
+        system.debug('SelDteFrom: ' + SelDteFrom + ' SelDteTo: ' + SelDteTo);
         List<string> listColors = new List<string>();
         List<Chart_Colors_for_Partner_Charts__c> lstChartcolor = Chart_Colors_for_Partner_Charts__c.getall().values();
         system.debug('=====lstChartcolor==='+lstChartcolor);
@@ -1560,7 +1636,7 @@ public with sharing class AA_VisualChartController {
                   dtToStr = dteToFrmt.format('yyyy-MM-dd\'T\'hh:mm:ss\'Z\'');
                   }
             if(!string.isBlank(SelDteFrom) && !string.isBlank(SelDteTo)){
-                AccountTeamMemberQuery = AccountTeamMemberQuery + ' AND (Account.PF_Risk_Date_Stamp__c >='+ dtFromStr +' OR Account.PF_Risk_Date_Stamp__c <='+ dtToStr + ')';
+                AccountTeamMemberQuery = AccountTeamMemberQuery + ' AND (Account.PF_Risk_Date_Stamp__c >='+ dtFromStr +' AND Account.PF_Risk_Date_Stamp__c <='+ dtToStr + ')';
                 }
             else if (!string.isBlank(SelDteFrom) && string.isBlank(SelDteTo)){
               AccountTeamMemberQuery = AccountTeamMemberQuery + ' AND (Account.PF_Risk_Date_Stamp__c >=' + dtFromStr + ')';
@@ -1580,6 +1656,7 @@ public with sharing class AA_VisualChartController {
                  AccountTeamMemberQuery = AccountTeamMemberQuery + ' AND User.Name = \'' + selIndividual + '\'';
                 accountQuery = accountQuery + ' AND User.Name = \'' + selIndividual + '\'';
                 }
+            system.debug('Risk Query: ' + AccountTeamMemberQuery);
             system.debug('Risk Query Result: ' + database.query(AccountTeamMemberQuery));    
             for(AccountTeamMember objAccountTeamMember : database.query(AccountTeamMemberQuery)){
                 mapAccountidtoAccount.put(objAccountTeamMember.AccountId,objAccountTeamMember.Account);
@@ -1613,7 +1690,7 @@ public with sharing class AA_VisualChartController {
           for(Account a: accs){
             accIds.add(a.ID);
             }    
-          system.debug('Risk Query Result: ' + mapAccountidtoAccount);
+          system.debug('Risk Query Result 2: ' + mapAccountidtoAccount);
           }
           
         //count of account which are active to show in the 2nd chart of 4th dashboard.

@@ -2,18 +2,12 @@ import { LightningElement, api } from 'lwc';
 
 import getReportVals from '@salesforce/apex/AA_VisualChartController.getReportVals';
 import getReportTable from '@salesforce/apex/AA_VisualChartController.getReportTable';
-import getADOActivityChart from '@salesforce/apex/AA_VisualChartController.getADOActivityChart';
-import getADOActivityTable from '@salesforce/apex/AA_VisualChartController.getADOActivityTable';
-import getFaciltyReportingChart from '@salesforce/apex/AA_VisualChartController.getFaciltyReportingChart';
-import getFaciltyReportingTable from '@salesforce/apex/AA_VisualChartController.getFaciltyReportingTable';
 import getTotalAccounts from '@salesforce/apex/AA_VisualChartController.getTotalAccounts';
-import sortTable from '@salesforce/apex/AA_VisualChartController.sortTable';
 
 export default class Visualcharts extends LightningElement {
 
 @api chartTitle;
 @api chart;
-@api chartLegend;
 @api chartData;
 @api chartlstData = [];
 @api chartlstCount;
@@ -27,9 +21,8 @@ export default class Visualcharts extends LightningElement {
 @api dteTo;
 @api showButton = false;
 @api ListOfContact = [];
-@api arrowDirection = 'arrowup';
 @api isAsc = false;
-@api selectedTabsoft ='firstName';
+@api sortField;
 @api paginationList = [];
 @api pageSize = 20;
 @api totalSize;
@@ -85,28 +78,53 @@ export default class Visualcharts extends LightningElement {
         this.reportTable();
         }
     
-    sortAccountName(){
-        this.accountName();
-        }
-    
-    sortOwner(){
-        this.owner();
-        }
-    
-    sortActivity(){
-        this.activity();
-        }
-    
-    sortRisk(){
-        this.risk();
-        }
-    
-    sortRiskDate(){
-        this.riskDate();
-        }
-    
-    sortTier(){
-        this.tier();
+    sort(event){
+        console.log('Sort Event Caused by: ' + event.target.name);
+                var field = event.target.name;
+                var sortAsc = this.isAsc;
+                let records = [...this.tableData];
+                var paginationList = [];
+                var i;
+            
+                var key =(a) => a[field]; 
+                var reverse;
+                if(sortAsc === false){
+                    reverse = -1;
+                    sortAsc = true;
+                    }
+                else{
+                    reverse = 1;
+                    sortAsc = false;
+                    }
+                    this.isAsc = sortAsc;
+                    this.sortField = field;
+                    this.tableData = records;
+                records.sort((a,b) => {
+                    let valueA = key(a) ? key(a).toLowerCase() : '';
+                    let valueB = key(b) ? key(b).toLowerCase() : '';
+                    return reverse * ((valueA > valueB) - (valueB > valueA));
+                    });
+                this.sortAsc = sortAsc;
+                this.sortField = field;
+                
+                var pageSize = this.pageSize;
+                var paginationList = [];
+             
+                var paginationList = [];
+                this.start = 0;
+                this.end = pageSize-1;
+                var loopSize;
+                if(records.length > pageSize){
+                    loopSize = pageSize;
+                    }
+                else{
+                    loopSize = records.length;
+                    }
+                for(var i=0; i< loopSize; i++){
+                    paginationList.push(records[i]);    
+                    }
+                this.paginationList = paginationList;
+                this.tableData = records;
         }
     
     downloadCsv(){
@@ -117,12 +135,12 @@ export default class Visualcharts extends LightningElement {
         var reportType = this.report;
         console.log("Report Type: " + reportType);
         // call the helper function which "return" the CSV data as a String   
-        if(levelType === 'National' || reportType === 'QBR Tracking' || reportType === 'Risk Account (SNF Only)' || reportType === 'Facility Reporting'){
-            var csv = this.convertArrayOfObjectsToCSV(stockData);
-            }
-        else{
+        //if(levelType === 'National' || reportType === 'QBR Tracking' || reportType === 'Risk Account (SNF Only)' || reportType === 'Facility Reporting'){
+        //var csv = this.convertArrayOfObjectsToCSV(stockData);
+        //    }
+       // else{
             var csv = this.convertArrayOfObjectsToCSV2(stockData);
-            }
+        //    }
          if (csv == null){return;} 
         
         
@@ -137,6 +155,7 @@ export default class Visualcharts extends LightningElement {
     reportData(){
         this.showChart = false;
         this.chartData = null;
+        this.chartlstData = null;
         getReportVals({
                         "selRole" : this.role,
                         "selReport" : this.report,
@@ -147,20 +166,20 @@ export default class Visualcharts extends LightningElement {
                     })
                 .then(
                     result=>{
-                        var response = result;
-                        var arr = [];
-                        var repList = JSON.parse(response);
-                        console.log('repList: ' + repList);
-                        this.chartlstCount = repList.length;
-                        for(var i = 0; i < repList.length; i++){ 
-                           var lstRep = repList[i].lstSNFRatio; 
-                            this.chartTitle = repList[i].label;
-                            this.chartData = lstRep;
-                            arr.push(repList[i]);
+                            var response = result;
+                            var arr = [];
+                            var repList = JSON.parse(response);
+                            console.log('repList: ' + repList);
+                            this.chartlstCount = repList.length;
+                            for(var i = 0; i < repList.length; i++){ 
+                                var lstRep = repList[i].lstSNFRatio; 
+                                this.chartTitle = repList[i].label;
+                                this.chartData = lstRep;
+                                arr.push(repList[i]);
+                                }
+                            this.showButton = true;
+                            this.chartlstData = arr;
                             }
-                        this.showButton = true;
-                        this.chartlstData = arr;
-                        }
                     )
                 .catch();
         }
@@ -209,46 +228,50 @@ export default class Visualcharts extends LightningElement {
                     )
                     .then(
                         result=>{
-                            var response = result;
-                        if(this.report !== 'ADO Activities'){
-                            var repList = JSON.parse(response);
-                            console.log('===repList====',repList);
-                            this.tableTitle = this.report;
-                            this.tableData = repList;
-                            this.totalSize = this.tableData.length;
-                            this.start = 0;
-                            this.end = pageSize-1;
-                            this.tableData = repList;
-                            var paginationList = [];
-                        for(var i=0; i< pageSize; i++){
-                            paginationList.push(response[i]);    
+                                var response = result;
+                                var repList = JSON.parse(response);
+                                console.log('===repList====',repList);
+                                this.tableTitle = this.report;
+                                this.tableData = repList;
+                                this.totalSize = this.tableData.length;
+                                this.start = 0;
+                                this.end = pageSize-1;
+                                this.tableData = repList;
+                                var paginationList = [];
+                                var loopSize;
+                                if(result.length > pageSize){
+                                    loopSize = pageSize;
+                                    this.nextButtonDisabled = false;
+                                    this.prevButtonDisabled = false;
+                                    }
+                                else{
+                                    loopSize = result.length;
+                                    }
+                                for(var i=0; i< pageSize; i++){
+                                    paginationList.push(response[i]);    
+                                    }
+                                this.paginationList = paginationList;
+                                console.log('result.length: ' + result.length);
+                                if(result.length > 2){
+                                    if(this.report !== 'ADO Activities'){
+                                        this.showStandardReport = true;
+                                        this.showADOReport = false;
+                                        }
+                                    else{
+                                        this.showStandardReport = false;
+                                        this.showADOReport = true;
+                                        }
+                                    }
+                                else{
+                                    this.showStandardReport = false;
+                                    this.showADOReport = false;
+                                    alert('Selected chart(s) have no data to display.');
+                                    }
+                                this.next();
+                                this.previous();
+                                console.log('Show Standard?: ' + this.showStandardReport);
+                                console.log('Show ADO?: ' + this.showADOReport);
                             }
-                    this.paginationList = paginationList;
-                    this.showStandardReport = true;
-                    this.showADOReport = false;
-                    this.next();
-                    this.previous();
-                    }
-                else{
-                    var repList = JSON.parse(response);
-                    console.log('===repList====',repList);
-                    this.tableTitle = this.report;
-                    this.tableData = repList;
-                    this.totalSize = this.tableData.length;
-                    this.start = 0;
-                    this.end = pageSize-1;
-                    this.tableData = repList;
-                    var paginationList = [];
-                    for(var i=0; i< pageSize; i++){
-                        paginationList.push(response[i]);
-                        }
-                    this.paginationList = paginationList;
-                    this.showStandardReport = false;
-                    this.showADOReport = true;
-                    this.next();
-                    this.previous();
-                    }
-                        }
                     )
                     .catch(
                         error=>{
@@ -257,115 +280,12 @@ export default class Visualcharts extends LightningElement {
                     );
         }
     
-    onSort(sortField){
-        //call apex class method
-        var pageSize = this.pageSize;
-        this.paginationList = null;
-      	this.tableData = null;
-        sortTable({
-                    'sortField': sortField,
-                    'isAsc': this.isAsc,
-                    "selRole" : this.role,
-                    "selReport" : this.report,
-                    "selRoleName" : this.roleName,
-                    "selIndividual" : this.person,
-                    "SelDteFrom" : this.dteFrom,
-                    "SelDteTo" : this.dteTo
-            })
-            .then(
-                result=>{
-                    var repList = JSON.parse(result);
-                    this.tableTitle = this.report;
-                    this.tableData = repList;
-                    this.totalSize = this.tableData.length;
-                    this.start = 0;
-                    this.end = pageSize-1;
-                    var paginationList = [];
-                    for(var i=0; i< pageSize; i++){
-                        paginationList.push(response[i]);
-                        }
-                    this.paginationList = paginationList;
-                    this.next();
-                    this.previous();
-                    }
-            )
-            .catch(
-                error=>{
-                    console.log('Error fetching sort result');
-                    }
-                );
-        }
-    
-    sortHelper(sortFieldName){
-        var currentDir = this.arrowDirection;
-      	if(currentDir == 'arrowdown'){
-            // set the arrowDirection attribute for conditionally rendred arrow sign  
-            this.arrowDirection = 'arrowup';
-            // set the isAsc flag to true for sort in Assending order.  
-            this.isAsc = true;
+        openItem(event){
+            event.preventDefault();
+            var id = event.target.value;
+            var url = '/' + id;
+            window.open(url);
             }
-       else{
-       	    this.arrowDirection = 'arrowdown';
-            this.isAsc = false;
-            }
-      	this.onSort(sortFieldName);
-        }
-       
-   accountName(){
-       	// set current selected header field on selectedTabsoft attribute.     
-       	this.selectedTabsoft = 'accountName';
-       	// call the helper function with pass sortField Name   
-       	this.sortHelper(this.selectedTabsoft);
-        }
- 
-    owner(){
-       	// set current selected header field on selectedTabsoft attribute.    
-       	this.selectedTabsoft = 'ownerName';
-       	// call the helper function with pass sortField Name  
-       	this.sortHelper(this.selectedTabsoft);
-    	}
- 
-    city(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'city';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
-        
-    state(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'state';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
-        
-    activity(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'activity';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
-        
-    risk(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'risk';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
-    
-    riskDate(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'riskDate';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
-        
-    tier(){
-       	// set current selected header field on selectedTabsoft attribute.        
-       	this.selectedTabsoft = 'tier';
-       	// call the helper function with pass sortField Name      
-       	this.sortHelper(this.selectedTabsoft);
-    	}
 
         next(){
             let countList = [...this.tableData];
@@ -377,7 +297,7 @@ export default class Visualcharts extends LightningElement {
             var totalSize = this.totalSize;
             var counter = 0;
             for(i=end+1; i<end+pageSize+1; i++){
-                if(countList.length > end){
+                if(i <=totalSize - 1 ){
                     paginationList.push(countList[i]);
                     counter ++ ;
                     }
@@ -388,7 +308,8 @@ export default class Visualcharts extends LightningElement {
             this.start = start;
             this.end = end;
             this.paginationList = paginationList;
-            
+            console.log('end: ' + this.end);
+            console.log('totalSize: ' + totalSize);
             if(this.end >= totalSize){
                 this.nextButtonDisabled = true;
                 }
@@ -504,7 +425,7 @@ export default class Visualcharts extends LightningElement {
         columnDivider = ',';
         lineDivider =  '\n';
  
-        keys = ['Account.Name','Account.Owner','Account.LastActivityDate','Account.PF_Reason_for_Risk__c','Account.PF_Risk_Date_Stamp__c', 'Account.PF_Tier__c'];
+        keys = ['Account Name','Account Owner','Last Activity Date','Reason for Risk ','Risk Date', 'Tier'];
         
         csvStringResult = '';
         csvStringResult += keys.join(columnDivider);
@@ -520,53 +441,48 @@ export default class Visualcharts extends LightningElement {
                   if(counter > 0){ 
                       csvStringResult += columnDivider; 
                    }  
-                 if(skey == 'Account.Name'){
-                     if(objectRecords[i].Account.Name != undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.Name+'"';
+                 if(skey == 'Account Name'){
+                     if(objectRecords[i].itemName != undefined){  
+                        csvStringResult += '"'+ objectRecords[i].itemName+'"';
                      	}
                      else{
                         csvStringResult += '"'+ ' ' +'"';	
                      	}
                      
                  }
-                 else if(skey == 'Account.Owner'){
-                     if(objectRecords[i].Account.Owner.Name == undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.Owner.Name+'"';
-                     	}
-                     else{
-                        csvStringResult += '"'+ ' ' +'"';
-                     	}
+                 else if(skey == 'Account Owner'){
+                    csvStringResult += '"Partner First"';
                  }
-                 else if(skey == 'Account.LastActivityDate'){
+                 else if(skey == 'Last Activity Date'){
                      
-                     if(objectRecords[i].Account.LastActivityDate != undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.LastActivityDate+'"';
+                     if(objectRecords[i].lastActivity != undefined){  
+                        csvStringResult += '"'+ objectRecords[i].lastActivity+'"';
                      	}
                      else{
                         csvStringResult += '"'+ ' ' +'"';
                      	}
                  }
                  
-                 else if(skey == 'Account.PF_Reason_for_Risk__c'){
-                     if(objectRecords[i].Account.PF_Reason_for_Risk__c != undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.PF_Reason_for_Risk__c+'"';
+                 else if(skey == 'Reason for Risk'){
+                     if(objectRecords[i].riskReason != undefined){  
+                        csvStringResult += '"'+ objectRecords[i].riskReason+'"';
                      	}
                      else{
                         csvStringResult += '"'+ ' ' +'"';
                      	}
                  }
-                 else if(skey == 'Account.PF_Risk_Date_Stamp__c'){
-                     if(objectRecords[i].Account.PF_Risk_Date_Stamp__c != undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.PF_Risk_Date_Stamp__c+'"';
+                 else if(skey == 'Risk Date Stamp'){
+                     if(objectRecords[i].riskDate != undefined){  
+                        csvStringResult += '"'+ objectRecords[i].riskDate+'"';
                      	}
                      else{
                         csvStringResult += '"'+ ' ' +'"';
                      	}
                  }
                  
-                 else if(skey == 'Account.PF_Tier__c'){
-                     if(objectRecords[i].Account.PF_Tier__c != undefined){  
-                        csvStringResult += '"'+ objectRecords[i].Account.PF_Tier__c+'"';
+                 else if(skey == 'Tier'){
+                     if(objectRecords[i].tier != undefined){  
+                        csvStringResult += '"'+ objectRecords[i].tier+'"';
                      	}
                      else{
                         csvStringResult += '"'+ ' ' +'"';
